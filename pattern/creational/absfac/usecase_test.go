@@ -3,7 +3,7 @@ package absfac_test
 import (
 	"testing"
 
-	"github.com/tjgurwara99/design-patterns/pattern/absfac"
+	"github.com/tjgurwara99/design-patterns/pattern/creation/absfac"
 )
 
 func testAddProduct(
