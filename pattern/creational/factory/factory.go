@@ -1,75 +1,75 @@
 // Package factory represents the use of the Factory Method pattern.
-// The usecase for this is somewhat made up since the unexported fields of the
-// shapes (circle, square and rectangle) can't really be updated/added when
-// using this in Go in the way that I have created them. I personally tend to
-// not use this pattern much in Go.
+// This is a very general pattern, I've been using it for years without
+// knowing that its actually a well established pattern.
 package factory
 
 import (
+	"errors"
 	"fmt"
-	"math"
 )
 
-// Shape the interface for all shapes.
-type Shape interface {
-	Area() float64
-	Perimeter() float64
+// Product is an example product type - your business entity (in onion architecture.)
+type Product struct {
+	Name  string
+	Price int64 // the correct way to handle prices - floats are error prone
 }
 
-type shape int
-
-const (
-	Circle shape = iota
-	Square
-	Rectangle
-)
-
-type rectangle struct {
-	base   float64
-	height float64
+// Productor is a general interface for general db queries.
+type Productor interface {
+	CreateProduct(p *Product) error
+	GetProduct(name string) (*Product, error)
 }
 
-func (r *rectangle) Area() float64 {
-	return r.base * r.height
-}
-
-func (r *rectangle) Perimeter() float64 {
-	return 2 * (r.base + r.height)
-}
-
-type square struct {
-	side float64
-}
-
-func (s *square) Area() float64 {
-	return s.side * s.side
-}
-
-func (s *square) Perimeter() float64 {
-	return 4 * s.side
-}
-
-type circle struct {
-	rad float64
-}
-
-func (c *circle) Area() float64 {
-	return math.Pi * c.rad * c.rad
-}
-
-func (c *circle) Perimeter() float64 {
-	return 2 * math.Pi * c.rad
-}
-
-func ConstructShape(s shape) (Shape, error) {
-	switch s {
-	case Circle:
-		return &circle{}, nil
-	case Square:
-		return &square{}, nil
-	case Rectangle:
-		return &rectangle{}, nil
-	default:
-		return nil, fmt.Errorf("unknown shape %v provided", s)
+func NewProductor(db *DBSub) Productor {
+	if db == nil {
+		return &inMemoryProductor{}
 	}
+	return &mysqlProductor{db: db}
+}
+
+type DBSub int
+
+type mysqlProductor struct {
+	db       *DBSub
+	products []Product
+}
+
+func (m *mysqlProductor) CreateProduct(p *Product) error {
+	m.products = append(m.products, *p)
+	return nil
+}
+
+var ErrProductNotFound error = errors.New("DB product not found")
+
+func (m *mysqlProductor) GetProduct(name string) (*Product, error) {
+	for _, prod := range m.products {
+		if prod.Name == name {
+			return &Product{
+				Name:  prod.Name,
+				Price: prod.Price,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("product not found: %w", ErrProductNotFound)
+}
+
+type inMemoryProductor struct {
+	products []Product
+}
+
+func (i *inMemoryProductor) CreateProduct(p *Product) error {
+	i.products = append(i.products, *p)
+	return nil
+}
+
+func (i *inMemoryProductor) GetProduct(name string) (*Product, error) {
+	for _, prod := range i.products {
+		if prod.Name == name {
+			return &Product{
+				Name:  prod.Name,
+				Price: prod.Price,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("product not found: %w", ErrProductNotFound)
 }
