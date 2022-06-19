@@ -3,7 +3,7 @@ package builder_test
 import (
 	"testing"
 
-	"github.com/tjgurwara99/design-patterns/pattern/creation/builder"
+	"github.com/tjgurwara99/design-patterns/pattern/creational/builder"
 )
 
 func TestCubeBuilder(t *testing.T) {
